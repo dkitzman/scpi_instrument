@@ -1,0 +1,11 @@
+[package]
+name = "scpi_instrument"
+version = "0.1.0"
+authors = ["Dakota Kitzman <dakota.kitzman@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+cortex-m = "0.6"
+scpi = "0.4.1"
+fe_rtos = { git = "https://github.com/badrobotics/FeRTOS/" }
+fe_osi = { git = "https://github.com/badrobotics/FeRTOS/" }
