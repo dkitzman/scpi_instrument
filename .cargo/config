@@ -1,9 +1,9 @@
 [target.'cfg(all(target_arch = "arm", target_os = "none"))']
-runner = "qemu-system-arm -M lm3s6965evb -cpu cortex-m3 -serial stdio -kernel target/thumbv7m-none-eabi/debug/scpi_instrument"
+runner = "/home/astrotone/.local/xPacks/@xpack-dev-tools/qemu-arm/2.8.0-12.1/.content/bin/qemu-system-gnuarmeclipse -M STM32F4-Discovery -kernel /home/astrotone/src/scpi_instrument/target/thumbv7em-none-eabihf/debug/scpi_instrument"
 
 rustflags = [
     "-C", "link-arg=-Tlink.x",
 ]
 
 [build]
-target = "thumbv7m-none-eabi"
+target = "thumbv7em-none-eabihf"

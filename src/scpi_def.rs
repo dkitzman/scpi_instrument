@@ -1,33 +1,6 @@
-pub fn scpi_parser(_: &mut usize) {
-    let mut subscriber = fe_osi::ipc::Subscriber::new("stdin").unwrap();
-    let mut publisher = fe_osi::ipc::Publisher::new("stdout").unwrap();
-
-    let mut my_device = MyDevice {};
-
-    let mut errors = ArrayErrorQueue::<10>::new();
-    let mut context = Context::new(&mut my_device, &mut errors, TREE);
-
-    //Response bytebuffer
-    let mut buf = ArrayVecFormatter::<256>::new();
-
-    loop {
-        if let Some(message) = subscriber.get_message() {
-            //Result
-            let result = context.run(&message, &mut buf);
-
-            if let Err(err) = result {
-                let msg = err.get_message().to_vec();
-                publisher.publish(msg).unwrap();
-            } else {
-                publisher.publish(buf.as_slice().to_vec()).unwrap();
-                //break;
-            }
-        }
-    }
-}
-
+use alloc::string::ToString;
 use scpi::error::Result;
-use scpi::prelude::*;
+use scpi::prelude::{Command, CommandTypeMeta, Context, ErrorCode, Node, ResponseUnit, Tokenizer};
 
 //Default commands
 use scpi::ieee488::commands::*;
@@ -50,8 +23,6 @@ use scpi::{
     scpi_tree,
 };
 
-pub struct MyDevice;
-
 /// # `[:EXAMple]:HELLO:WORLD?`
 /// Example "Hello world" query
 ///
@@ -66,17 +37,25 @@ impl Command for HelloWorldCommand {
         _args: &mut Tokenizer,
         response: &mut ResponseUnit,
     ) -> Result<()> {
-        response.data(b"Hello world!" as &[u8]).finish()
+        response.data("Hello world!".as_bytes()).finish()
     }
 }
 
-impl Device for MyDevice {
-    fn cls(&mut self) -> Result<()> {
-        Ok(())
-    }
+pub struct MeasureVoltageCommand {}
+impl Command for MeasureVoltageCommand {
+    qonly!();
 
-    fn rst(&mut self) -> Result<()> {
-        Ok(())
+    fn query(
+        &self,
+        _context: &mut Context,
+        _args: &mut Tokenizer,
+        response: &mut ResponseUnit,
+    ) -> Result<()> {
+        let voltage = 12;
+        let msg = alloc::format!("{} V", voltage);
+        response
+            .data(msg.into_bytes().as_slice())
+            .finish()
     }
 }
 
@@ -85,7 +64,12 @@ pub const TREE: &Node = scpi_tree![
     ieee488_cls!(),
     ieee488_ese!(),
     ieee488_esr!(),
-    ieee488_idn!(b"BAD Robotics", b"QEMU Test Project", b"00000000", b"0.1"),
+    ieee488_idn!(
+        "BAD Robotics".as_bytes(),
+        "QEMU Test Project".as_bytes(),
+        "00000000".as_bytes(),
+        "0.1".as_bytes()
+    ),
     ieee488_opc!(),
     ieee488_rst!(),
     ieee488_sre!(),
@@ -96,20 +80,16 @@ pub const TREE: &Node = scpi_tree![
     scpi_status!(),
     // Create default SCPI mandated SYSTem subsystem
     scpi_system!(),
+    // User defined Subsystems
     Node {
-        name: b"EXAMple",
-        optional: true,
+        name: b"MEASure",
+        optional: false,
         handler: None,
         sub: &[Node {
-            name: b"HELLO",
+            name: b"VOLTage",
             optional: false,
-            handler: None,
-            sub: &[Node {
-                name: b"WORLD",
-                optional: true,
-                handler: Some(&HelloWorldCommand {}),
-                sub: &[],
-            }],
-        },],
+            handler: Some(&MeasureVoltageCommand {}),
+            sub: &[],
+        }]
     }
 ];
