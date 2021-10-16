@@ -1,4 +1,3 @@
-use alloc::string::ToString;
 use scpi::error::Result;
 use scpi::prelude::{Command, CommandTypeMeta, Context, ErrorCode, Node, ResponseUnit, Tokenizer};
 
@@ -52,10 +51,8 @@ impl Command for MeasureVoltageCommand {
         response: &mut ResponseUnit,
     ) -> Result<()> {
         let voltage = 12;
-        let msg = alloc::format!("{} V", voltage);
-        response
-            .data(msg.into_bytes().as_slice())
-            .finish()
+        let msg = alloc::format!("{} V", voltage).into_bytes();
+        response.data(msg.as_slice()).finish()
     }
 }
 
@@ -64,12 +61,7 @@ pub const TREE: &Node = scpi_tree![
     ieee488_cls!(),
     ieee488_ese!(),
     ieee488_esr!(),
-    ieee488_idn!(
-        "BAD Robotics".as_bytes(),
-        "QEMU Test Project".as_bytes(),
-        "00000000".as_bytes(),
-        "0.1".as_bytes()
-    ),
+    ieee488_idn!(b"BAD Robotics", b"QEMU Test Project", b"00000000", b"0.1"),
     ieee488_opc!(),
     ieee488_rst!(),
     ieee488_sre!(),

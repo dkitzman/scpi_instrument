@@ -59,6 +59,11 @@ fn main() -> ! {
     )
     .unwrap();
 
+    fe_osi::interrupt::register_interrupt(
+        stm32::Interrupt::USART2 as isize,
+        uart_server::uart_rx_isr,
+    );
+
     // Separate out the sender and receiver of the serial port
     let (tx, rx) = serial.split();
 
